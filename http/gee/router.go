@@ -1,6 +1,7 @@
 package gee
 
 import (
+	"net/http"
 	"strings"
 )
 
@@ -72,10 +73,11 @@ func (r *router) handle(c *Context) {
 	if n != nil {
 		c.Params = params
 		key := c.Method + "-" + n.pattern
-		if handler, ok := r.handlers[key]; ok {
-			handler(c)
-			return
-		}
+		c.handlers = append(c.handlers, r.handlers[key])
+	} else {
+		c.handlers = append(c.handlers, func(ctx *Context) {
+			c.String(http.StatusNotFound, "404 NOT FOUND: %s\n", c.Path)
+		})
 	}
-	c.String(500, "404 NOT FOUND: %s\n", c.Path)
+	c.Next()
 }

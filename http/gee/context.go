@@ -15,6 +15,7 @@ type Context struct {
 	StatusCode int
 	handlers   []HandlerFunc
 	index      int
+	engine     *Engine
 }
 
 func NewContext(w http.ResponseWriter, req *http.Request) *Context {
@@ -81,8 +82,10 @@ func (c *Context) Data(statusCode int, data []byte) {
 	c.Writer.Write(data)
 }
 
-func (c *Context) HTML(statusCode int, html string) {
+func (c *Context) HTML(statusCode int, name string, data any) {
 	c.SetHeader("Content-Type", "text/html")
 	c.Status(statusCode)
-	c.Writer.Write([]byte(html))
+	if err := c.engine.htmlTemplate.ExecuteTemplate(c.Writer, name, data); err != nil {
+		c.Fail(500, err.Error())
+	}
 }
